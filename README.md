@@ -1,6 +1,6 @@
 # SImpleWEBSever
 # EX01 Developing a Simple Webserver
-## Date:27/9/2026
+## Date:05/10/2026
 ## AIM:
 To develop a simple webserver to serve html pages and display the Device Specifications of your Laptop.
 
@@ -36,55 +36,78 @@ Start the server script and check for errors.
 Open a browser and navigate to http://127.0.0.1:8000 (or the assigned port).
 
 ## PROGRAM:
-html_content="""<!DOCTYPE html>
-<html lang="en">
+```
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import platform
+import socket
+import os
+
+NAME = "SELVASRI V"
+REG_NO = "26018221"
+
+def get_specs():
+    return {
+        "Device Name": socket.gethostname(),
+        "Operating System": f"{platform.system()} {platform.release()}",
+        "OS Version": platform.version(),
+        "Architecture": platform.machine(),
+        "Processor": platform.processor() or "Unknown",
+        "CPU Cores": os.cpu_count(),
+        "Python Version": platform.python_version(),
+    }
+
+def build_page():
+    rows = "".join(
+        f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in get_specs().items()
+    )
+    return f"""<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>My Simple Server</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        .container {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Device Specifications</title>
+  <style>
+    body {{ font-family: Arial, sans-serif; background: #f2f5f9; text-align: center; }}
+    table {{ margin: 30px auto; border-collapse: collapse; background: #fff; }}
+    th, td {{ border: 1px solid #ccc; padding: 10px 20px; text-align: left; }}
+    th {{ background: #2c3e50; color: #fff; }}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Hello from my server!</h1>
-        <p>This page is being served by a simple Python web server.</p>
-    </div>
+  <h1>Laptop Device Specifications</h1>
+  <h3>Name: SELVASRI V | Register No: 26018221</h3>
+  <table>{rows}</table>
 </body>
 </html>"""
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-def run_server(port=8000):
-    with open("index.html", "w") as f:
-        f.write(html_content)
-    server_address = ('', port)
-    httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
-    print(f"Serving on http://localhost:{port}")
-    httpd.serve_forever()
+class MyHandler(BaseHTTPRequestHandler):
+    def send_html(self, content, status=200):
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(content.encode("utf-8"))
 
-if __name__ == "__main__":
-    run_server()
+    def do_GET(self):
+        print("Request:", self.path)
+        if self.path == "/specs":
+            self.send_html(build_page())
+            return
+        name = "index.html" if self.path == "/" else self.path.lstrip("/")
+        name = os.path.basename(name)
+        if name.endswith(".html") and os.path.exists(name):
+            with open(name, encoding="utf-8") as f:
+                self.send_html(f.read())
+        else:
+            self.send_html("<h1>404 - Page Not Found</h1>", 404)
 
+server_address = ("", 8000)
+httpd = HTTPServer(server_address, MyHandler)
+print("My webserver is running on http://127.0.0.1:8000 ...")
+httpd.serve_forever()
+```
 
-## OUTPUT:
-<img width="1335" height="671" alt="image" src="https://github.com/user-attachments/assets/a46364b0-876d-4969-b688-2061d72f5a9e" />
-<img width="1350" height="652" alt="{3F94B4BF-4BC0-4879-B151-8A1C8F3585A8}" src="https://github.com/user-attachments/assets/a89ce403-fb92-44a6-8116-046bb2ac3a8e" />
-
-
+# OUTPUT:
+![alt text](output1.png)
+![alt text](output2.png)
+![alt text](output3.png)
 ## RESULT:
 The program for implementing simple webserver is executed successfully.
